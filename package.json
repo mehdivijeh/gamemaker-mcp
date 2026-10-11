@@ -1,0 +1,63 @@
+{
+  "name": "gamemaker-mcp",
+  "version": "0.1.0",
+  "description": "MCP server for GameMaker (macOS, LTS 2026/2024.x): AI models can edit projects, build & run them with Igor, and control the live game over a built-in GML bridge.",
+  "main": "src/index.js",
+  "bin": {
+    "gamemaker-mcp": "./src/index.js"
+  },
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node --test test/*.test.js",
+    "test:handshake": "node test/mcp-handshake.mjs",
+    "test:http": "node test/http.test.mjs",
+    "test:e2e": "node test/e2e-gamemaker.mjs",
+    "demo": "node demo/mcp-demo.mjs"
+  },
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "model-context-protocol",
+    "gamemaker",
+    "gml",
+    "game-development",
+    "ai",
+    "ai-agent",
+    "claude",
+    "openai",
+    "gpt",
+    "cursor",
+    "cline",
+    "macos"
+  ],
+  "author": "Mehdi Vijeh <mehdivijeh@gmail.com>",
+  "license": "MIT",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mehdivijeh/gamemaker-mcp.git"
+  },
+  "homepage": "https://github.com/mehdivijeh/gamemaker-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/mehdivijeh/gamemaker-mcp/issues"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "files": [
+    "src/",
+    "gml/",
+    "docs/",
+    "demo/",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "zod": "^3.25.76"
+  }
+}
