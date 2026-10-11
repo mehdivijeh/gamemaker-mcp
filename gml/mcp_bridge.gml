@@ -234,6 +234,8 @@ function mcp_bridge_dispatch(_id, _cmd, _args) {
             _res.os = os_type;
             _res.uptimeMs = current_time - _s.started;
             _res.logCount = array_length(_s.logLines);
+            _res.mouseX = mouse_x;
+            _res.mouseY = mouse_y;
             break;
 
         case "globals.get":
@@ -371,6 +373,16 @@ function mcp_bridge_dispatch(_id, _cmd, _args) {
             room_goto(_room);
             break;
 
+        case "room.restart":
+            room_restart();
+            _res.room = room_get_name(room);
+            break;
+
+        case "game.restart":
+            game_restart();
+            _res.restarted = true;
+            break;
+
         case "functions.call":
             var _fname = string(variable_struct_get(_args, "function"));
             var _fn = variable_global_get(_fname);
@@ -425,6 +437,16 @@ function mcp_bridge_dispatch(_id, _cmd, _args) {
             }
             _res.key = _code;
             _res.action = _action;
+            break;
+
+        case "mouse.pos":
+            var _mx = variable_struct_exists(_args, "x") ? _args.x : window_mouse_get_x();
+            var _my = variable_struct_exists(_args, "y") ? _args.y : window_mouse_get_y();
+            window_mouse_set(_mx, _my);
+            _res.x = _mx;
+            _res.y = _my;
+            _res.mouseX = mouse_x;
+            _res.mouseY = mouse_y;
             break;
 
         case "logs.get":

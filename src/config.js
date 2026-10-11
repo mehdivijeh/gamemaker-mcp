@@ -190,7 +190,9 @@ export function getSettings() {
     env.GAMEMAKER_PROJECTS_DIR,
     file.projectsDir,
     path.join(HOME, "GameMakerProjects"),
+    path.join(HOME, "Documents", "GameMakerProjects"),
     path.join(HOME, "GameMakerStudio2"),
+    path.join(HOME, "Documents", "GameMakerStudio2"),
   ]);
 
   const bridgePort = Number(env.GAMEMAKER_MCP_PORT || file.bridgePort) || DEFAULTS.bridgePort;

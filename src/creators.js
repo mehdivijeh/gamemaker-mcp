@@ -7,7 +7,7 @@ import path from "node:path";
 import crypto from "node:crypto";
 import { resolveEvent, eventName } from "./events.js";
 import { readYY, writeYY, writeText } from "./yy.js";
-import { TYPE_DIRS, folderForType } from "./project.js";
+import { GMProject, TYPE_DIRS, folderForType } from "./project.js";
 
 export function folderRef(type) {
   return { name: folderForType(type), path: `folders/${folderForType(type)}.yy` };
@@ -101,6 +101,47 @@ export function createObject(project, name, opts = {}) {
   project.addResource(name, "GMObject", rel);
   project.save();
   return rel;
+}
+
+export function updateObject(project, objectName, opts = {}) {
+  const { yyPath } = findObjectYY(project, objectName);
+  const yy = readYY(yyPath);
+  if (opts.sprite !== undefined) {
+    yy.spriteId = opts.sprite
+      ? { name: opts.sprite, path: relYY("GMSprite", opts.sprite) }
+      : null;
+  }
+  if (opts.parentObject !== undefined) {
+    yy.parentObjectId = opts.parentObject
+      ? { name: opts.parentObject, path: relYY("GMObject", opts.parentObject) }
+      : null;
+  }
+  if (opts.visible !== undefined) yy.visible = !!opts.visible;
+  if (opts.solid !== undefined) yy.solid = !!opts.solid;
+  if (opts.persistent !== undefined) yy.persistent = !!opts.persistent;
+  writeYY(yyPath, yy);
+  return {
+    name: objectName,
+    sprite: yy.spriteId?.name ?? null,
+    parentObject: yy.parentObjectId?.name ?? null,
+    visible: yy.visible,
+    solid: yy.solid,
+    persistent: yy.persistent,
+  };
+}
+
+export function getObject(project, objectName) {
+  const { yyPath } = findObjectYY(project, objectName);
+  const yy = readYY(yyPath);
+  return {
+    name: objectName,
+    sprite: yy.spriteId?.name ?? null,
+    parentObject: yy.parentObjectId?.name ?? null,
+    visible: yy.visible,
+    solid: yy.solid,
+    persistent: yy.persistent,
+    events: listObjectEvents(project, objectName),
+  };
 }
 
 export function setObjectEvent(project, objectName, spec, code) {
@@ -411,6 +452,158 @@ export function setRoomCreationCode(project, roomName, code) {
   }
   writeYY(yyPath, yy);
   return yy.creationCodeFile;
+}
+
+export function getRoom(project, roomName) {
+  const r = project.findResource(roomName);
+  if (!r || r.type !== "GMRoom") throw new Error(`Room "${roomName}" not found.`);
+  const yy = readYY(project.resourceYY(roomName));
+  const instances = listRoomInstances(project, roomName);
+  return {
+    name: roomName,
+    width: yy.roomSettings?.Width ?? 1366,
+    height: yy.roomSettings?.Height ?? 768,
+    persistent: !!yy.roomSettings?.persistent,
+    creationCodeFile: yy.creationCodeFile || null,
+    instanceCount: instances.length,
+    instances,
+    layers: (yy.layers ?? []).map((l) => ({
+      name: l.name,
+      type: l.resourceType,
+      visible: l.visible,
+      depth: l.depth,
+    })),
+  };
+}
+
+export function updateRoom(project, roomName, opts = {}) {
+  const r = project.findResource(roomName);
+  if (!r || r.type !== "GMRoom") throw new Error(`Room "${roomName}" not found.`);
+  const yyPath = project.resourceYY(roomName);
+  const yy = readYY(yyPath);
+  yy.roomSettings ??= { Width: 1366, Height: 768, persistent: false, inheritRoomSettings: false };
+  if (opts.width !== undefined) yy.roomSettings.Width = opts.width;
+  if (opts.height !== undefined) yy.roomSettings.Height = opts.height;
+  if (opts.persistent !== undefined) yy.roomSettings.persistent = !!opts.persistent;
+  writeYY(yyPath, yy);
+  return {
+    name: roomName,
+    width: yy.roomSettings.Width,
+    height: yy.roomSettings.Height,
+    persistent: yy.roomSettings.persistent,
+  };
+}
+
+export function setFirstRoom(project, roomName) {
+  return project.setFirstRoom(roomName);
+}
+
+/* ------------------------------------------------------------------ */
+/* Projects                                                            */
+/* ------------------------------------------------------------------ */
+
+export function createProject(targetPath, name, opts = {}) {
+  let projectDir;
+  let yypPath;
+  if (targetPath.endsWith(".yyp")) {
+    yypPath = path.resolve(targetPath);
+    projectDir = path.dirname(yypPath);
+    name = name || path.basename(yypPath, ".yyp");
+  } else {
+    name = name || path.basename(targetPath);
+    projectDir = path.resolve(targetPath);
+    yypPath = path.join(projectDir, `${name}.yyp`);
+  }
+
+  if (fs.existsSync(yypPath)) {
+    throw new Error(`Project already exists at ${yypPath}`);
+  }
+  fs.mkdirSync(projectDir, { recursive: true });
+
+  const standardFolders = [
+    "Objects",
+    "Rooms",
+    "Scripts",
+    "Sprites",
+    "Sounds",
+    "Shaders",
+    "Fonts",
+    "Tile Sets",
+    "Sequences",
+    "Timelines",
+    "Paths",
+    "Extensions",
+    "Notes",
+    "Particle Systems",
+  ];
+
+  const yyp = {
+    $GMProject: "",
+    "%Name": name,
+    AudioGroups: [
+      {
+        $GMAudioGroup: "",
+        "%Name": "audiogroup_default",
+        name: "audiogroup_default",
+        resourceType: "GMAudioGroup",
+        resourceVersion: "2.0",
+        targets: -1,
+      },
+    ],
+    configs: { children: [], name: "Default" },
+    defaultScriptType: 1,
+    Folders: standardFolders.map((f) => ({
+      $GMFolder: "",
+      "%Name": f,
+      folderPath: `folders/${f}.yy`,
+      name: f,
+      resourceType: "GMFolder",
+      resourceVersion: "2.0",
+    })),
+    IncludedFiles: [],
+    isEcma: false,
+    LibraryEmitters: [],
+    MetaData: { IDEVersion: "2026.0.0.16" },
+    name,
+    resources: [],
+    resourceType: "GMProject",
+    resourceVersion: "2.0",
+    RoomOrderNodes: [],
+    templateType: null,
+    TextureGroups: [
+      {
+        $GMTextureGroup: "",
+        "%Name": "Default",
+        autocrop: true,
+        border: 2,
+        compressFormat: "bz2",
+        customOptions: "",
+        directory: "",
+        groupParent: null,
+        isScaled: true,
+        loadType: "default",
+        mipsToGenerate: 0,
+        name: "Default",
+        resourceType: "GMTextureGroup",
+        resourceVersion: "2.0",
+        targets: -1,
+      },
+    ],
+  };
+
+  writeYY(yypPath, yyp);
+  const project = new GMProject(yypPath);
+
+  const firstRoomName = opts.firstRoom ?? "rm_game";
+  if (firstRoomName) {
+    createRoom(project, firstRoomName, {
+      width: opts.width ?? 1366,
+      height: opts.height ?? 768,
+      first: true,
+    });
+  }
+
+  return { project, yypPath, name };
 }
 
 /* ------------------------------------------------------------------ */

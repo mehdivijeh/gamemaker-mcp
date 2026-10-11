@@ -73,13 +73,23 @@ console.log(`tools/list ok: ${names.length} tools`);
 
 const required = [
   "gm_open_project",
+  "gm_create_project",
+  "gm_close_project",
   "gm_write_gml",
   "gm_set_object_event",
+  "gm_get_object",
+  "gm_set_object_properties",
+  "gm_get_room",
+  "gm_set_room_properties",
+  "gm_set_first_room",
   "gm_inject_bridge",
   "gm_build",
   "gm_run_game",
   "gm_bridge_screenshot",
   "gm_bridge_set_globals",
+  "gm_bridge_restart_room",
+  "gm_bridge_restart_game",
+  "gm_bridge_set_mouse",
 ];
 for (const r of required) {
   if (!names.includes(r)) fail(`missing tool ${r}`);

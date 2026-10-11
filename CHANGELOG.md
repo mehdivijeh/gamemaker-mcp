@@ -6,11 +6,38 @@ Initial release. Verified end-to-end against GameMaker **LTS 2026**
 (IDE 2026.0.0.16, runtime 2026.0.0.23) on macOS.
 
 ### Features
-- **42 MCP tools** across three layers: project editing, Igor build/run, and a
+- **52 MCP tools** across three layers: project editing, Igor build/run, and a
   live in-game bridge.
 - **Project layer** — read/write scripts, objects + all event types, rooms,
   instances, room/instance creation code, sprites imported from PNGs (modern
   frame/layer/sequence layout), tolerant `.yy` relaxed-JSON reader/writer.
+  - Project management: `gm_create_project` to bootstrap a brand-new project
+    from scratch with standard folders and starting room, and `gm_close_project`.
+  - Object properties: `gm_get_object` and `gm_set_object_properties` (sprite,
+    parentObject, visible, solid, persistent).
+  - Room management: `gm_get_room`, `gm_set_room_properties` (dimensions and
+    persistence), and `gm_set_first_room` (reorder room order nodes).
+  - Additional event aliases: forgiving resolution for GUI begin/end, Draw begin/end,
+    Pre/Post draw, Step begin/end, Room start/end, and Game start/end.
+- **Build layer** — Igor CLI wrapper: release builds, structured compile
+  errors, run/stop, log + runtime-error readers, automatic staging into
+  `YoYo Runner.app`, automatic runner installation, retry on the flaky
+  .NET `AccessViolationException`, `DOTNET_PROCESSOR_COUNT=1` workaround.
+- **Live bridge** — pure-GML bridge (script + persistent object) speaking
+  newline-JSON over a **raw TCP** server: globals, instances (read/write/
+  create/destroy), rooms (`gm_bridge_change_room`, `gm_bridge_restart_room`),
+  game restart (`gm_bridge_restart_game`), window mouse positioning (`gm_bridge_set_mouse`),
+  function calls, optional `eval`, key injection, game speed, logs,
+  screenshots (returned to the model as images), and an unhandled-exception handler
+  that replaces blocking error dialogs.
+
+### Fixes
+- Fixed missing `spawnSync` import from `node:child_process` in `src/index.js`
+  when running `install_dmg.sh`.
+- Replaced fragile regex comma-stripping in `gm_read_resource` with the robust
+  `readYY` state machine.
+- Expanded `projectsDir` auto-discovery to include `~/Documents/GameMakerProjects`
+  and `~/Documents/GameMakerStudio2`.
 - **Build layer** — Igor CLI wrapper: release builds, structured compile
   errors, run/stop, log + runtime-error readers, automatic staging into
   `YoYo Runner.app`, automatic runner installation, retry on the flaky

@@ -1,7 +1,7 @@
 {
   "name": "gamemaker-mcp",
   "version": "0.1.0",
-  "description": "MCP server for GameMaker (macOS). Give any AI model — Claude, GPT, Gemini — superpowers over your projects: edit scripts, objects and rooms, build & run them via Igor, and control the running game live: variables, instances, input, screenshots. 42 tools. stdio + HTTP.",
+  "description": "MCP server for GameMaker (macOS). Give any AI model — Claude, GPT, Gemini — superpowers over your projects: edit scripts, objects and rooms, build & run them via Igor, and control the running game live: variables, instances, input, screenshots. 52 tools. stdio + HTTP.",
   "main": "src/index.js",
   "bin": {
     "gamemaker-mcp": "./src/index.js"

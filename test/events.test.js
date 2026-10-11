@@ -44,6 +44,13 @@ test("aliases", () => {
   assert.equal(resolveEvent("networking").eventNum, 68);
   assert.equal(resolveEvent("drawgui").eventNum, 64);
   assert.equal(resolveEvent("endstep").fileName, "Step_2.gml");
+  assert.equal(resolveEvent("guibegin").fileName, "Draw_74.gml");
+  assert.equal(resolveEvent("guiend").fileName, "Draw_75.gml");
+  assert.equal(resolveEvent("drawbegin").fileName, "Draw_72.gml");
+  assert.equal(resolveEvent("predraw").fileName, "Draw_76.gml");
+  assert.equal(resolveEvent("stepbegin").fileName, "Step_1.gml");
+  assert.equal(resolveEvent("roomstart").fileName, "Other_4.gml");
+  assert.equal(resolveEvent("gamestart").fileName, "Other_2.gml");
 });
 
 test("unknown names throw with guidance", () => {

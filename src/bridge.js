@@ -189,6 +189,18 @@ export class BridgeClient {
   setSpeed(fps) {
     return this.send("game.speed", { fps });
   }
+
+  restartRoom() {
+    return this.send("room.restart");
+  }
+
+  restartGame() {
+    return this.send("game.restart");
+  }
+
+  setMouse(x, y) {
+    return this.send("mouse.pos", { x, y });
+  }
 }
 
 /**

@@ -18,10 +18,12 @@ import http from "node:http";
 import crypto from "node:crypto";
 import os from "node:os";
 import path from "node:path";
+import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 import { getSettings, recentProjects } from "./config.js";
 import { GMProject } from "./project.js";
+import { readYY } from "./yy.js";
 import * as C from "./creators.js";
 import { resolveEvent, eventName } from "./events.js";
 import {
@@ -167,6 +169,52 @@ server.registerTool(
 );
 
 server.registerTool(
+  "gm_create_project",
+  {
+    title: "Create a new GameMaker project",
+    description:
+      "Bootstrap a new, valid GameMaker project (.yyp) with standard folders and a default starting room, and make it the active project.",
+    inputSchema: {
+      name: z.string().describe("Project name (e.g. SpaceShooter)."),
+      dir: z
+        .string()
+        .optional()
+        .describe("Target folder where the project directory will be created (defaults to detected projects folder)."),
+      firstRoom: z.string().optional().describe('Name of initial room, default "rm_game".'),
+      width: z.number().int().positive().optional().describe("Room width (default 1366)."),
+      height: z.number().int().positive().optional().describe("Room height (default 768)."),
+    },
+  },
+  wrap(async ({ name, dir, firstRoom, width, height }) => {
+    const s = getSettings();
+    const baseDir = dir ?? s.projectsDir ?? path.join(os.homedir(), "GameMakerProjects");
+    const projDir = path.join(baseDir, name);
+    const created = C.createProject(projDir, name, { firstRoom, width, height });
+    project = created.project;
+    return ok({
+      created: true,
+      name: created.name,
+      yypPath: created.yypPath,
+      summary: project.summary(),
+    });
+  }),
+);
+
+server.registerTool(
+  "gm_close_project",
+  {
+    title: "Close active project",
+    description: "Close the currently active project and clear active project state.",
+    inputSchema: {},
+  },
+  wrap(async () => {
+    const prev = project?.name;
+    project = null;
+    return ok({ closed: true, previousProject: prev ?? null });
+  }),
+);
+
+server.registerTool(
   "gm_project_summary",
   {
     title: "Active project summary",
@@ -199,7 +247,7 @@ server.registerTool(
   wrap(async ({ name }) => {
     const p = needProject();
     const file = p.resourceYY(name);
-    return ok({ file, yy: JSON.parse(fs.readFileSync(file, "utf8").replace(/,\s*([}\]])/g, "$1")) });
+    return ok({ file, yy: readYY(file) });
   }),
 );
 
@@ -325,6 +373,37 @@ server.registerTool(
 );
 
 server.registerTool(
+  "gm_get_object",
+  {
+    title: "Get object properties and events",
+    description:
+      "Inspect an object's properties: assigned sprite, parent object, visible, solid, persistent flags, and its list of events.",
+    inputSchema: { object: z.string().describe("Object name.") },
+  },
+  wrap(async ({ object }) => ok(C.getObject(needProject(), object))),
+);
+
+server.registerTool(
+  "gm_set_object_properties",
+  {
+    title: "Update object properties",
+    description:
+      "Update an existing object's properties: sprite, parentObject, visible, solid, persistent.",
+    inputSchema: {
+      object: z.string().describe("Object name."),
+      sprite: z.string().nullable().optional().describe("Sprite name to assign, or null to remove."),
+      parentObject: z.string().nullable().optional().describe("Parent object name, or null to remove."),
+      visible: z.boolean().optional(),
+      solid: z.boolean().optional(),
+      persistent: z.boolean().optional(),
+    },
+  },
+  wrap(async ({ object, sprite, parentObject, visible, solid, persistent }) =>
+    ok(C.updateObject(needProject(), object, { sprite, parentObject, visible, solid, persistent })),
+  ),
+);
+
+server.registerTool(
   "gm_list_object_events",
   {
     title: "List an object's events",
@@ -427,6 +506,44 @@ server.registerTool(
     inputSchema: { room: z.string(), code: z.string() },
   },
   wrap(async ({ room, code }) => ok({ creationCodeFile: C.setRoomCreationCode(needProject(), room, code) })),
+);
+
+server.registerTool(
+  "gm_get_room",
+  {
+    title: "Get room details",
+    description: "Get room dimensions, persistence, layers, instance count, instances, and creation code path.",
+    inputSchema: { room: z.string().describe("Room name.") },
+  },
+  wrap(async ({ room }) => ok(C.getRoom(needProject(), room))),
+);
+
+server.registerTool(
+  "gm_set_room_properties",
+  {
+    title: "Update room properties",
+    description: "Update room dimensions (width, height) and persistence.",
+    inputSchema: {
+      room: z.string().describe("Room name."),
+      width: z.number().int().positive().optional(),
+      height: z.number().int().positive().optional(),
+      persistent: z.boolean().optional(),
+    },
+  },
+  wrap(async ({ room, width, height, persistent }) =>
+    ok(C.updateRoom(needProject(), room, { width, height, persistent })),
+  ),
+);
+
+server.registerTool(
+  "gm_set_first_room",
+  {
+    title: "Set starting room",
+    description:
+      "Set an existing room as the first room in the project room order (the room where the game starts).",
+    inputSchema: { room: z.string().describe("Room name.") },
+  },
+  wrap(async ({ room }) => ok({ roomOrder: C.setFirstRoom(needProject(), room) })),
 );
 
 server.registerTool(
@@ -805,6 +922,26 @@ server.registerTool(
 );
 
 server.registerTool(
+  "gm_bridge_restart_room",
+  {
+    title: "Restart the active room",
+    description: "Restart the currently running room in the active game (room_restart()).",
+    inputSchema: {},
+  },
+  wrap(async () => ok(await needBridge().restartRoom())),
+);
+
+server.registerTool(
+  "gm_bridge_restart_game",
+  {
+    title: "Restart the running game",
+    description: "Restart the running game from the beginning (game_restart()).",
+    inputSchema: {},
+  },
+  wrap(async () => ok(await needBridge().restartGame())),
+);
+
+server.registerTool(
   "gm_bridge_call",
   {
     title: "Call a game function",
@@ -841,6 +978,20 @@ server.registerTool(
     },
   },
   wrap(async ({ key, action }) => ok(await needBridge().key(key, action ?? "press"))),
+);
+
+server.registerTool(
+  "gm_bridge_set_mouse",
+  {
+    title: "Set mouse position",
+    description:
+      "Set the mouse cursor position in the running game window (window_mouse_set(x, y)).",
+    inputSchema: {
+      x: z.number().describe("Window X coordinate."),
+      y: z.number().describe("Window Y coordinate."),
+    },
+  },
+  wrap(async ({ x, y }) => ok(await needBridge().setMouse(x, y))),
 );
 
 server.registerTool(
@@ -1050,7 +1201,7 @@ Configuration (auto-detected, all optional):
                        { "project", "runtimePath", "igorPath", "userFolder",
                          "projectsDir", "bridgePort" }
 
-Tools: 42 (see README.md / docs/tools.md). Check detection with the gm_runtime_info tool.`);
+Tools: 52 (see README.md / docs/tools.md). Check detection with the gm_runtime_info tool.`);
 }
 
 const argv = process.argv.slice(2);

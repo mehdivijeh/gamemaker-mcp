@@ -196,6 +196,16 @@ export class GMProject {
     }
   }
 
+  setFirstRoom(roomName) {
+    const r = this.findResource(roomName);
+    if (!r || r.type !== "GMRoom") throw new Error(`Room "${roomName}" not found in project.`);
+    this.data.RoomOrderNodes ??= [];
+    this.data.RoomOrderNodes = this.data.RoomOrderNodes.filter((n) => n.roomId.name !== roomName);
+    this.data.RoomOrderNodes.unshift({ roomId: { name: roomName, path: r.path } });
+    this.save();
+    return this.roomOrder();
+  }
+
   /** Read a text file (GML code) relative to the project root. */
   readText(rel) {
     return fs.readFileSync(this.abs(rel), "utf8");

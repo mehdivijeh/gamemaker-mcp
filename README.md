@@ -21,7 +21,7 @@ An [MCP](https://modelcontextprotocol.io) server for **GameMaker** (LTS 2026 / 2
 
 ## ✨ What it does
 
-**42 MCP tools** in three layers:
+**52 MCP tools** in three layers:
 
 | Layer | You get |
 | --- | --- |
@@ -87,12 +87,12 @@ Restart your client, then just ask:
 | Tool | Purpose |
 | --- | --- |
 | `gm_runtime_info` | detected Igor / runtimes / user folder / projects / bridge port |
-| `gm_list_projects` · `gm_open_project` · `gm_project_summary` | find, open, summarize projects |
+| `gm_list_projects` · `gm_open_project` · `gm_create_project` · `gm_close_project` · `gm_project_summary` | find, open, create, close & summarize projects |
 | `gm_list_resources` · `gm_read_resource` | browse resources & raw `.yy` JSON |
 | `gm_search_gml` · `gm_read_gml` · `gm_write_gml` | regex search, read/write GML (scripts or any object event) |
 | `gm_create_script` | new script resource |
-| `gm_create_object` · `gm_list_object_events` · `gm_set_object_event` · `gm_remove_object_event` | objects & all events (Create, Step, Draw GUI, Async, Alarm…, or `Other:68` style) |
-| `gm_create_room` · `gm_list_room_instances` · `gm_add_instance` · `gm_remove_instance` · `gm_set_room_creation_code` | rooms, instances, creation code |
+| `gm_create_object` · `gm_get_object` · `gm_set_object_properties` · `gm_list_object_events` · `gm_set_object_event` · `gm_remove_object_event` | objects, properties (sprite, parent, flags) & all events |
+| `gm_create_room` · `gm_get_room` · `gm_set_room_properties` · `gm_set_first_room` · `gm_list_room_instances` · `gm_add_instance` · `gm_remove_instance` · `gm_set_room_creation_code` | rooms, dimensions, order, instances, creation code |
 | `gm_import_sprite` | sprite from PNG frame(s) with the modern frame/layer/sequence layout |
 | `gm_delete_resource` | remove a resource (folder + project entry) |
 
@@ -115,13 +115,13 @@ Restart your client, then just ask:
 | Tool | Purpose |
 | --- | --- |
 | `gm_inject_bridge` | add the in-game bridge (once per project, idempotent) |
-| `gm_bridge_info` | room, fps, sizes, instance count, save area |
+| `gm_bridge_info` | room, fps, sizes, instance count, mouse coords, save area |
 | `gm_bridge_get_globals` / `gm_bridge_set_globals` | read & write globals (numbers, strings, arrays, structs) |
 | `gm_bridge_list_instances` / `gm_bridge_get_instance` / `gm_bridge_set_instance` | inspect & modify instances live |
 | `gm_bridge_create_instance` / `gm_bridge_destroy_instance` | spawn/remove instances at runtime |
-| `gm_bridge_change_room` · `gm_bridge_call` | `room_goto` / call any GML function by name |
+| `gm_bridge_change_room` · `gm_bridge_restart_room` · `gm_bridge_restart_game` · `gm_bridge_call` | `room_goto` / restart room or game / call any GML function by name |
 | `gm_bridge_eval` | evaluate GML strings (needs `__mcp_eval`/`execute_string` in the game) |
-| `gm_bridge_key` | press/release/clear keys (`space`, `right`, `A`, `F5`, …) |
+| `gm_bridge_key` · `gm_bridge_set_mouse` | simulate keys (`space`, `right`, `A`, `F5`, …) & window mouse position |
 | `gm_bridge_set_speed` | fps / slow motion |
 | `gm_bridge_logs` | in-game bridge log (connections, custom `mcp_bridge_log()`, exceptions) |
 | `gm_bridge_screenshot` | PNG of the game window, returned as an image to the model |

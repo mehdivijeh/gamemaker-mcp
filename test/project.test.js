@@ -6,6 +6,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { GMProject } from "../src/project.js";
+import { readYY } from "../src/yy.js";
 import {
   createScript,
   createObject,
@@ -17,6 +18,12 @@ import {
   listObjectEvents,
   readObjectEvent,
   setRoomCreationCode,
+  getObject,
+  updateObject,
+  getRoom,
+  updateRoom,
+  setFirstRoom,
+  createProject,
 } from "../src/creators.js";
 import { makeFixtureProject, cleanupFixture } from "./helpers/make-fixture.js";
 
@@ -80,9 +87,7 @@ test("room creation code file is written and cleared", () => {
     const rel = setRoomCreationCode(p, "rm_main", "global.start = 1;\n");
     assert.equal(rel, "rooms/rm_main/RoomCreationCode.gml");
     assert.equal(fs.readFileSync(p.abs(rel), "utf8"), "global.start = 1;\n");
-    const yy = JSON.parse(
-      fs.readFileSync(p.resourceYY("rm_main"), "utf8").replace(/,\s*([}\]])/g, "$1"),
-    );
+    const yy = readYY(p.resourceYY("rm_main"));
     assert.equal(yy.creationCodeFile, rel);
     setRoomCreationCode(p, "rm_main", "");
     assert.ok(!fs.existsSync(path.join(p.root, rel)));
@@ -100,5 +105,90 @@ test("createRoom/addResource rejects duplicates", () => {
     assert.throws(() => createScript(p, "scr_helpers"), /already exists/);
   } finally {
     cleanupFixture(dir);
+  }
+});
+
+test("getObject and updateObject inspect and modify object properties", () => {
+  const { dir, yypPath } = makeFixtureProject("obj-props");
+  try {
+    const p = new GMProject(yypPath);
+    const initial = getObject(p, "obj_player");
+    assert.equal(initial.name, "obj_player");
+    assert.equal(initial.sprite, null);
+    assert.equal(initial.visible, true);
+
+    const updated = updateObject(p, "obj_player", {
+      visible: false,
+      solid: true,
+      persistent: true,
+    });
+    assert.equal(updated.visible, false);
+    assert.equal(updated.solid, true);
+    assert.equal(updated.persistent, true);
+
+    const reloaded = getObject(p, "obj_player");
+    assert.equal(reloaded.visible, false);
+    assert.equal(reloaded.solid, true);
+    assert.equal(reloaded.persistent, true);
+  } finally {
+    cleanupFixture(dir);
+  }
+});
+
+test("getRoom and updateRoom inspect and modify room settings", () => {
+  const { dir, yypPath } = makeFixtureProject("room-props");
+  try {
+    const p = new GMProject(yypPath);
+    const initial = getRoom(p, "rm_main");
+    assert.equal(initial.name, "rm_main");
+    assert.equal(initial.width, 640);
+    assert.equal(initial.height, 480);
+    assert.equal(initial.instanceCount, 1);
+
+    const updated = updateRoom(p, "rm_main", { width: 1920, height: 1080, persistent: true });
+    assert.equal(updated.width, 1920);
+    assert.equal(updated.height, 1080);
+    assert.equal(updated.persistent, true);
+
+    const reloaded = getRoom(p, "rm_main");
+    assert.equal(reloaded.width, 1920);
+    assert.equal(reloaded.height, 1080);
+    assert.equal(reloaded.persistent, true);
+  } finally {
+    cleanupFixture(dir);
+  }
+});
+
+test("setFirstRoom reorders rooms in project", () => {
+  const { dir, yypPath } = makeFixtureProject("first-room");
+  try {
+    const p = new GMProject(yypPath);
+    createRoom(p, "rm_second", { width: 800, height: 600 });
+    assert.deepEqual(p.roomOrder(), ["rm_main", "rm_second"]);
+
+    const order = setFirstRoom(p, "rm_second");
+    assert.deepEqual(order, ["rm_second", "rm_main"]);
+    assert.equal(p.firstRoom(), "rm_second");
+  } finally {
+    cleanupFixture(dir);
+  }
+});
+
+test("createProject bootstraps a valid project with standard folders and starting room", () => {
+  const tmpDir = fs.mkdtempSync(path.join(process.env.TMPDIR ?? "/tmp", "gm-new-proj-"));
+  try {
+    const { project, yypPath, name } = createProject(path.join(tmpDir, "NewGame"), "NewGame", {
+      width: 1280,
+      height: 720,
+      firstRoom: "rm_start",
+    });
+    assert.equal(name, "NewGame");
+    assert.ok(fs.existsSync(yypPath));
+    assert.deepEqual(project.roomOrder(), ["rm_start"]);
+    const summary = project.summary();
+    assert.equal(summary.name, "NewGame");
+    assert.equal(summary.counts.GMRoom, 1);
+  } finally {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
   }
 });

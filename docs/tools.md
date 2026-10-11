@@ -14,6 +14,8 @@ creatable by name (GameMaker hashes the target object into the event id).
 | `gm_runtime_info` | — | Igor path, runtime folders, user folder (licence), projects dir, bridge port, IDE installs, recent projects |
 | `gm_list_projects` | `searchDir?` | recent projects + `.yyp` files under the folder (recursive, 4 levels) |
 | `gm_open_project` | `path` (`.yyp` or folder or `X.yyp/X.yyp`) | project summary; becomes the active project |
+| `gm_create_project` | `name`, `dir?`, `firstRoom?`, `width?`, `height?` | bootstrap a new valid project with standard folders and starting room; becomes active |
+| `gm_close_project` | — | close active project and reset project state |
 | `gm_project_summary` | — | name, IDE version, resource counts, room order |
 
 ## Reading & editing code
@@ -32,6 +34,8 @@ creatable by name (GameMaker hashes the target object into the event id).
 | --- | --- | --- |
 | `gm_create_script` | `name`, `content?` | `{script, path}` |
 | `gm_create_object` | `name`, `parentObject?`, `sprite?`, `persistent?`, `visible?` | `{object, path}` |
+| `gm_get_object` | `object` | `{name, sprite, parentObject, visible, solid, persistent, events[]}` |
+| `gm_set_object_properties` | `object`, `sprite?`, `parentObject?`, `visible?`, `solid?`, `persistent?` | updated object properties |
 | `gm_delete_resource` | `name` | `{deleted}` — removes folder + project entry (careful!) |
 
 ## Object events
@@ -47,6 +51,9 @@ creatable by name (GameMaker hashes the target object into the event id).
 | Tool | Parameters | Returns |
 | --- | --- | --- |
 | `gm_create_room` | `name`, `width?` (1366), `height?` (768), `first?`, `persistent?` | `{room, path}` |
+| `gm_get_room` | `room` | `{name, width, height, persistent, creationCodeFile, instanceCount, instances, layers}` |
+| `gm_set_room_properties` | `room`, `width?`, `height?`, `persistent?` | `{name, width, height, persistent}` |
+| `gm_set_first_room` | `room` | `{roomOrder}` — moves room to the start of the project's room order |
 | `gm_list_room_instances` | `room` | instances with name, object, x, y, layer, creation-code flag |
 | `gm_add_instance` | `room`, `object`, `x?`, `y?`, `layer?` (`"Instances"`), `creationCode?` | `{instance, room, object}` (`inst_XXXXXXXX` name) |
 | `gm_remove_instance` | `room`, `instance` | `{removed}` |
@@ -93,9 +100,12 @@ building. Values are JSON-encoded on the wire; arrays/structs round-trip.
 | `gm_bridge_create_instance` | `object`, `x?`, `y?`, `layer?` (auto), `depth?` | `{instance: <id>, object}` — falls back to `instance_create_depth` when the layer is missing |
 | `gm_bridge_destroy_instance` | `id` | `{destroyed: true}` |
 | `gm_bridge_change_room` | `room` | `{room}` — performs `room_goto` |
+| `gm_bridge_restart_room` | — | `{room}` — restarts the active room (`room_restart()`) |
+| `gm_bridge_restart_game` | — | `{restarted: true}` — restarts the entire game (`game_restart()`) |
 | `gm_bridge_call` | `function`, `args?: any[]` | `{result?}` — `method_call` on any global/script function by name |
 | `gm_bridge_eval` | `code` | `{result?}` — needs a global `__mcp_eval(code)` or `execute_string` in the game, else an explanatory error |
 | `gm_bridge_key` | `key` (`"space"`, `"A"`…`"Z"`, `"0"`…`"9"`, `"left/up/right/down"`, `"enter/escape/shift/control/alt/tab/backspace/delete/home/end"`, `"F1"`…`"F12"`, or raw code), `action?` (`press`/`release`/`clear`) | `{key, action}` — injected into the game's keyboard state |
+| `gm_bridge_set_mouse` | `x`, `y` | `{x, y, mouseX, mouseY}` — moves mouse in game window (`window_mouse_set(x, y)`) |
 | `gm_bridge_set_speed` | `fps` | `{fps}` — great for slow-motion debugging |
 | `gm_bridge_logs` | `since?` (index) | `{logs: string[], total}` — connections, `mcp_bridge_log()` calls, unhandled exceptions |
 | `gm_bridge_screenshot` | `path?` (file name in save area) | **image content block** (PNG, base64) + the file path — models can literally look at your game |

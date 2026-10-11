@@ -24,6 +24,9 @@ function startFakeGame(startPort = 0) {
         const res = { id: req.id, ok: true };
         if (req.cmd === "ping") res.pong = true;
         else if (req.cmd === "info") res.room = "rm_main";
+        else if (req.cmd === "room.restart") res.room = "rm_main";
+        else if (req.cmd === "game.restart") res.restarted = true;
+        else if (req.cmd === "mouse.pos") { res.x = req.args.x; res.y = req.args.y; }
         else if (req.cmd === "echo") res["caf\u00e9"] = req.args.text;
         else if (req.cmd === "utf8") res.text = "h\u00e9llo w\u00f6rld \u2615";
         else res.echoArgs = req.args;
@@ -55,6 +58,13 @@ test("client sends commands and parses responses", async () => {
     assert.equal(pong.pong, true);
     const info = await client.info();
     assert.equal(info.room, "rm_main");
+    const rroom = await client.restartRoom();
+    assert.equal(rroom.room, "rm_main");
+    const rgame = await client.restartGame();
+    assert.equal(rgame.restarted, true);
+    const mpos = await client.setMouse(100, 200);
+    assert.equal(mpos.x, 100);
+    assert.equal(mpos.y, 200);
     const echo = await client.send("echo", { text: "h\u00e9llo" });
     assert.equal(echo["caf\u00e9"], "h\u00e9llo");
     const utf8 = await client.send("utf8");

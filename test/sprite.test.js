@@ -5,6 +5,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { GMProject } from "../src/project.js";
+import { readYY } from "../src/yy.js";
 import { importSprite, pngSize } from "../src/creators.js";
 import { makeFixtureProject, cleanupFixture } from "./helpers/make-fixture.js";
 import { makePng } from "./helpers/make-png.js";
@@ -36,7 +37,7 @@ test("importSprite builds a valid sprite folder + .yy + registration", () => {
     assert.equal(res.width, 32);
     assert.equal(res.height, 24);
 
-    const yy = JSON.parse(fs.readFileSync(p.resourceYY("spr_hero"), "utf8").replace(/,\s*([}\]])/g, "$1"));
+    const yy = readYY(p.resourceYY("spr_hero"));
     assert.equal(yy.frames.length, 2);
     assert.equal(yy.layers.length, 1);
     assert.equal(yy.sequence.length, 2);
