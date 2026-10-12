@@ -11,9 +11,9 @@ An [MCP](https://modelcontextprotocol.io) server for **GameMaker** (LTS 2026 / 2
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Platform: macOS](https://img.shields.io/badge/platform-macOS-lightgrey.svg)]()
 
-<img src="docs/images/demo-3-after-boost.png" width="720" alt="Live GameMaker demo driven by an AI over MCP: the HUD shows values changed while the game was running">
+<img src="docs/images/demo-3-after-boost.png" width="720" alt="Live GameMaker demo driven by an AI over MCP: Cyber Surge retro-arcade arena with in-game telemetry and live overdrive">
 
-*Captured by a model through `gm_bridge_screenshot`, mid-game. The HUD shows values the model changed over the bridge **while the game was running**: speed 3 → 9 and a boost triggered by a simulated key press.*
+*Captured by a model through `gm_bridge_screenshot`, mid-game in "Cyber Surge: MCP Arena". The HUD shows values the model manipulated over the bridge **while the game was running**: cruise speed 4 → 15.96 [BOOSTED], overdrive mode engaged via `demo_overdrive(true)` with an 8x combo multiplier, and rapid plasma volleys triggered by simulated keystrokes.*
 
 </div>
 
@@ -176,8 +176,8 @@ creates a fresh project at `~/GameMakerProjects/MCP Demo` **entirely through the
 ## 🧪 Tests & development
 
 ```sh
-npm test                     # 24 unit tests — no GameMaker required
-node test/mcp-handshake.mjs  # MCP protocol handshake (42 tools, error handling)
+npm test                     # 28 unit tests — no GameMaker required
+node test/mcp-handshake.mjs  # MCP protocol handshake (52 tools, error handling)
 node test/http.test.mjs      # streamable HTTP transport + session handling
 node test/e2e-gamemaker.mjs  # full loop against a real install: build → run → live → stop
 node test/debug-run.mjs      # build + launch and leave the game running for manual poking
